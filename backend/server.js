@@ -1,28 +1,31 @@
-// backend/server.js
 const express = require('express');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const cors = require('cors');
-const bodyParser = require('body-parser');
 
 const app = express();
+
 app.use(cors());
-app.use(bodyParser.json());
+app.use(express.json());
 
-// --- Connect to MongoDB ---
-mongoose.connect('mongodb://localhost:27017/biblio') // no extra options needed
+// Routes
+app.use('/books', require('./routes/bookRoutes'));
+app.use('/reviews', require('./routes/reviewRoutes'));
+app.use('/favorites', require('./routes/FavoriteRoutes'));
+app.use('/auth', require('./routes/Auth'));
+
+
+const User = require('./models/User'); 
+
+// MongoDB
+mongoose.connect('mongodb://localhost:27017/biblio')
   .then(() => console.log('MongoDB connected'))
-  .catch(err => console.log('MongoDB connection error:', err));
+  .catch(err => console.log(err));
 
-// --- User schema ---
-const UserSchema = new mongoose.Schema({
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-});
 
-const User = mongoose.model('User', UserSchema);
 
-// --- Sign Up route ---
+
+// Signup
 app.post('/signup', async (req, res) => {
   const { email, password } = req.body;
 
@@ -31,8 +34,7 @@ app.post('/signup', async (req, res) => {
     if (userExist) return res.status(400).json({ message: 'Email already exists' });
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({ email, password: hashedPassword });
-    await newUser.save();
+    await new User({ email, password: hashedPassword }).save();
 
     res.status(201).json({ message: 'User created successfully' });
   } catch (err) {
@@ -40,7 +42,7 @@ app.post('/signup', async (req, res) => {
   }
 });
 
-// --- Login route ---
+// Login
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
@@ -51,12 +53,11 @@ app.post('/login', async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
 
-    res.status(200).json({ message: 'Login successful' });
+    res.json({ message: 'Login successful', email: user.email, _id: user._id });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-// --- Start server ---
-const PORT = 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Server
+app.listen(5000, () => console.log('Server running on port 5000'));

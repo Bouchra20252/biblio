@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { View, TextInput, Button, Text, StyleSheet, Alert } from 'react-native';
+import { UserContext } from '../context/UserContext';
 import axios from 'axios';
 
 export default function SignUp({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const { loginUser } = useContext(UserContext);
 
   const handleSignUp = async () => {
     if (!email || !password) return Alert.alert("Error", "Enter email and password");
@@ -13,8 +15,9 @@ export default function SignUp({ navigation }) {
 
     try {
       const res = await axios.post('http://192.168.1.15:5000/signup', { email, password });
+      loginUser({ email }); //here we sav
       Alert.alert("Success", res.data.message);
-      navigation.navigate('Login'); // redirect to login after signup
+      navigation.navigate('Home'); // redirect to login after signup
     } catch (err) {
       Alert.alert("Error", err.response ? err.response.data.message : err.message);
     } finally {

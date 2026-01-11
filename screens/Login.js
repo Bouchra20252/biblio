@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState,useContext } from 'react';
 import { View, TextInput, Button, Text, StyleSheet, Alert } from 'react-native';
 import axios from 'axios';
+import { UserContext } from '../context/UserContext';
 
 export default function Login({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const { loginUser } = useContext(UserContext);
 
   const handleLogin = async () => {
     if (!email || !password) return Alert.alert("Error", "Enter email and password");
@@ -13,8 +15,14 @@ export default function Login({ navigation }) {
 
     try {
       const res = await axios.post('http://192.168.1.15:5000/login', { email, password });
+  loginUser({
+  _id: res.data._id,
+  email: res.data.email
+});
+
+
       Alert.alert("Success", res.data.message);
-      navigation.navigate('Home'); // go to Home on success
+      navigation.replace('Home'); // go to Home on success
     } catch (err) {
       Alert.alert("Error", err.response ? err.response.data.message : err.message);
     } finally {

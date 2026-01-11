@@ -8,7 +8,7 @@ import LibraryScreen from '../screens/Library';
 import BookDetailScreen from '../screens/BookDetail';
 import FavoritesScreen from '../screens/Favorites';
 import ProfileScreen from '../screens/Profile';
-
+import ReadingView from '../screens/ReadingView';
 
 
 const Stack = createNativeStackNavigator();
@@ -24,7 +24,7 @@ export default function AppNavigator() {
         <Stack.Screen name="BookDetail" component={BookDetailScreen} />
         <Stack.Screen name="Favorites" component={FavoritesScreen} />
         <Stack.Screen name="Profile" component={ProfileScreen} />
-
+        <Stack.Screen name="ReadingView" component={ReadingView} />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -43,6 +43,8 @@ const closeSidebar = () => {
         <Text style={styles.appName}>Biblio 📚</Text>
       </View>
 
+      
+
       {/* MAIN CONTENT */}
       <View style={styles.content}>
         <Image
@@ -59,6 +61,8 @@ const closeSidebar = () => {
           onPress={() => navigation.navigate('Library')}
         />
       </View>
+
+
 
       {/* SIDEBAR */}
       {sidebarOpen && (
@@ -101,6 +105,7 @@ const styles = StyleSheet.create({
   appName: {
     fontSize: 20,
     fontWeight: 'bold',
+    color: '#2c6142ff',
   },
 
   content: {
@@ -111,15 +116,16 @@ const styles = StyleSheet.create({
   },
 
   logo: {
-    width: 150,
-    height: 150,
+    width: 200,
+    height: 200,
     marginBottom: 20,
   },
 
   subtitle: {
-    fontSize: 16,
+    fontSize: 19,
     textAlign: 'center',
     marginBottom: 20,
+    color: '#2c6142ff',
   },
 
   sidebar: {

@@ -1,49 +1,58 @@
 // screens/LibraryScreen.js
-import React, { useState } from 'react';
+import React, { useState , useContext, useEffect } from 'react';
+import { FavoritesContext } from '../context/FavoritesContext';
 import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity } from 'react-native';
+import axios from 'axios';
 
 export default function LibraryScreen({ navigation }) {
-  const [favorites, setFavorites] = useState([]);
+  const { favorites, addFavorite, removeFavorite } = useContext(FavoritesContext);
+ const [books, setBooks] = useState([]);
+//
+ const coverMap = {
+  "assets/book-one.png": require('../assets/book-one.png'),
+ 
+};
 
-  // Example book
-  const books = [
-    {
-      id: 1,
-      title: "The Great Gatsby",
-      author: "F. Scott Fitzgerald",
-      description: "A story about the Jazz Age and the American Dream.",
-      cover: require('../assets/book-one.png'),
-      content: "Full text of the book goes here..."
-    }
-  ];
 
-  const toggleFavorite = (bookId) => {
-    setFavorites(prev => 
-      prev.includes(bookId) ? prev.filter(id => id !== bookId) : [...prev, bookId]
-    );
+ 
+useEffect(() => {
+  axios.get('http://192.168.1.15:5000/books')
+    .then(res => setBooks(res.data))
+    .catch(err => console.log(err));
+}, []);
+
+ const toggleFavorite = (book) => {
+    const exists = favorites.find(b => b._id === book._id);
+    exists ? removeFavorite(book._id) : addFavorite(book);
   };
+
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
       {books.map(book => (
-        <View key={book.id} style={styles.card}>
-      <Image source={book.cover} style={styles.cover} />
-
+        <View key={book._id} style={styles.card}>
+          <Image
+            source={coverMap[book.cover]}
+            style={styles.cover}
+          />
 
           <Text style={styles.title}>{book.title}</Text>
           <Text style={styles.author}>by {book.author}</Text>
           <Text style={styles.description}>{book.description}</Text>
 
           <View style={styles.buttons}>
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => navigation.navigate('BookDetail', { book })}
               style={styles.detailButton}
             >
-              <Text style={styles.detailText}>Read</Text>
+              <Text style={styles.detailText}>View Details</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => toggleFavorite(book.id)} style={styles.favButton}>
-              <Text style={{ color: favorites.includes(book.id) ? 'red' : 'gray' }}>❤️</Text>
+            <TouchableOpacity onPress={() => toggleFavorite(book)}>
+              <Text style={{ fontSize: 20 }}>
+                {favorites.find(b => b._id === book._id) ? '❤️' : '🤍'}
+                
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -51,6 +60,7 @@ export default function LibraryScreen({ navigation }) {
     </ScrollView>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: { padding:20, alignItems:'center' },
@@ -64,3 +74,4 @@ const styles = StyleSheet.create({
   detailText: { color:'#fff' },
   favButton: { padding:8 }
 });
+
