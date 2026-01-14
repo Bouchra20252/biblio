@@ -14,10 +14,10 @@ export default function SignUp({ navigation }) {
     setLoading(true);
 
     try {
-      const res = await axios.post('http://192.168.1.15:5000/signup', { email, password });
-      loginUser({ email }); //here we sav
+      const res = await axios.post('http://172.20.10.3:5000/signup', { email, password });
+      loginUser({ email }); //here we save the user
       Alert.alert("Success", res.data.message);
-      navigation.navigate('Home'); // redirect to login after signup
+      navigation.navigate('Home'); 
     } catch (err) {
       Alert.alert("Error", err.response ? err.response.data.message : err.message);
     } finally {

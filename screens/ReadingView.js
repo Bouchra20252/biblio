@@ -1,14 +1,16 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useContext } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Animated } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { UserContext } from '../context/UserContext';
 
 export default function ReadingView({ route, navigation }) {
-  const { content, title } = route.params;
+  const { content, title, bookId } = route.params; 
+  const { markAsFinished } = useContext(UserContext);
 
   const themes = {
-    light: { bg: '#FFFFFF', text: '#2c3e50', title: '#0072ff', line: '#FFD700' },
-    vintage: { bg: '#f4ecd8', text: '#5b4636', title: '#8b4513', line: '#d4a373' }, 
-    midnight: { bg: '#1a1a2e', text: '#e0e0e0', title: '#4cc9f0', line: '#4834d4' }  
+    light: { bg: '#FFFFFF', text: '#2c3e50', title: '#2C6142', line: '#E8F0EA' },
+    vintage: { bg: '#FDFCF7', text: '#5b4636', title: '#2C6142', line: '#F2E8CF' }, 
+    midnight: { bg: '#1a1a2e', text: '#e0e0e0', title: '#E8F0EA', line: '#2C6142' }  
   };
 
   const [theme, setTheme] = useState('vintage');
@@ -21,6 +23,7 @@ export default function ReadingView({ route, navigation }) {
   const fadeAnim = useRef(new Animated.Value(0)).current; 
   const active = themes[theme];
 
+  // Load bookmark on mount
   useEffect(() => {
     const loadSavedPos = async () => {
       try {
@@ -49,66 +52,68 @@ export default function ReadingView({ route, navigation }) {
       setMode('PIN');
     } else {
       setIsAiming(true);
-      // REFINED ALERT TEXT
-      Alert.alert(
-        "Set Your Mark",
-        "Navigate to your current line and tap the text to place your bookmark.",
-        [{ text: "Continue", style: "default" }]
-      );
+      Alert.alert("Set Your Mark", "Navigate to your line and tap the text to place your pin.");
     }
   };
 
   const confirmPinAtTap = async () => {
     if (!isAiming) return;
-
     try {
       const positionToSave = currentScroll;
       await AsyncStorage.setItem(`@pin_${title}`, positionToSave.toString());
       setBookmarkedPos(positionToSave);
       setIsAiming(false);
       setMode('GOTO');
-      
-      Alert.alert("Bookmark Set", "We've saved your place.");
+      Alert.alert("Pin Set", "Your position is archived.");
     } catch (e) { console.log(e); }
+  };
+
+  const handleFinishBook = async () => {
+    const success = await markAsFinished(bookId);
+    if (success) {
+      Alert.alert("Congratulations!", "Book archived in your finished collection.");
+      navigation.navigate('Profile');
+    } else {
+      Alert.alert("Error", "Could not update archive. Try again.");
+    }
   };
 
   return (
     <View style={[styles.container, { backgroundColor: active.bg }]}>
       
+      {/* HEADER CONTROLS */}
       <View style={styles.topBar}>
-        <View style={{ width: 80 }} /> 
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+           <Text style={[styles.backIcon, { color: active.title }]}>←</Text>
+        </TouchableOpacity>
 
         <View style={styles.themeDots}>
           {['light', 'vintage', 'midnight'].map((t) => (
             <TouchableOpacity 
               key={t}
-              style={[styles.dot, { backgroundColor: themes[t].bg, borderColor: theme === t ? active.title : '#ccc', borderWidth: theme === t ? 2 : 1 }]} 
+              style={[styles.dot, { 
+                backgroundColor: themes[t].bg, 
+                borderColor: theme === t ? active.title : '#ccc', 
+                borderWidth: theme === t ? 2 : 1 
+              }]} 
               onPress={() => setTheme(t)} 
             />
           ))}
         </View>
 
         <TouchableOpacity 
-          style={[styles.pinBtn, { backgroundColor: isAiming ? '#E67E22' : (mode === 'GOTO' ? '#ff4757' : '#555') }]}
+          style={[styles.pinBtn, { backgroundColor: isAiming ? '#D4A373' : (mode === 'GOTO' ? '#2C6142' : '#555') }]}
           onPress={handleButtonPress}
           onLongPress={async () => {
             await AsyncStorage.removeItem(`@pin_${title}`);
             setBookmarkedPos(null);
             setMode('PIN');
-            setIsAiming(false);
-            Alert.alert("Removed", "Your bookmark has been cleared.");
+            Alert.alert("Cleared", "Bookmark removed.");
           }}
         >
           <Text style={styles.pinText}>{isAiming ? "TAP TEXT" : mode}</Text>
         </TouchableOpacity>
       </View>
-
-      {/* REFINED BANNER STYLE */}
-      {isAiming && (
-        <View style={styles.aimingBanner}>
-          <Text style={styles.aimingText}>Choose a spot to bookmark...</Text>
-        </View>
-      )}
 
       <ScrollView 
         ref={scrollRef}
@@ -116,21 +121,35 @@ export default function ReadingView({ route, navigation }) {
         onScroll={(e) => setCurrentScroll(e.nativeEvent.contentOffset.y)}
         scrollEventThrottle={16}
       >
-        <TouchableOpacity 
-          activeOpacity={1} 
-          onPress={confirmPinAtTap} 
-        >
-          <Text style={[styles.bookTitle, { color: active.title }]}>{title}</Text>
+        <TouchableOpacity activeOpacity={1} onPress={confirmPinAtTap}>
+          
+          <View style={styles.titleContainer}>
+             <Text style={[styles.bookTitle, { color: active.title }]}>{title}</Text>
+             <View style={[styles.titleUnderline, { backgroundColor: active.title }]} />
+          </View>
           
           <Animated.View style={[styles.lineFlash, { 
             backgroundColor: active.line,
-            top: (bookmarkedPos || 0) + 120, 
+            top: (bookmarkedPos || 0) + 185, 
             opacity: fadeAnim,
           }]} />
 
           <Text style={[styles.textContent, { color: active.text }]}>
             {content ? content.replace(/\\n/g, '\n') : "No content available."}
           </Text>
+
+          {/* FINIS SECTION */}
+          <View style={styles.finishSection}>
+            <View style={[styles.ornament, { backgroundColor: active.title }]} />
+            <Text style={[styles.finisText, { color: active.title }]}>THE END</Text>
+            <TouchableOpacity 
+              style={[styles.finishBtn, { borderColor: active.title }]} 
+              onPress={handleFinishBook}
+            >
+              <Text style={[styles.finishBtnText, { color: active.title }]}>MARK AS FINISHED</Text>
+            </TouchableOpacity>
+          </View>
+
         </TouchableOpacity>
       </ScrollView>
     </View>
@@ -147,32 +166,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 15,
   },
+  backIcon: { fontSize: 24, fontWeight: 'bold' },
   themeDots: { 
     flexDirection: 'row',
     position: 'absolute',
     left: '50%',
-    marginLeft: -55,
+    marginLeft: -50,
     top: 55,
   },
-  dot: { width: 26, height: 26, borderRadius: 13, marginHorizontal: 6 },
-  pinBtn: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, minWidth: 75, alignItems: 'center', elevation: 4 },
+  dot: { width: 22, height: 22, borderRadius: 11, marginHorizontal: 5 },
+  pinBtn: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, minWidth: 75, alignItems: 'center' },
   pinText: { color: 'white', fontSize: 10, fontWeight: 'bold', letterSpacing: 1 },
-  aimingBanner: { 
-    backgroundColor: 'rgba(230, 126, 34, 0.1)', 
-    paddingVertical: 8, 
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(230, 126, 34, 0.2)'
-  },
-  aimingText: { color: '#E67E22', fontSize: 12, fontWeight: '600', fontStyle: 'italic' },
-  scrollContent: { padding: 25, paddingBottom: 100 },
-  bookTitle: { fontSize: 26, fontWeight: 'bold', textAlign: 'center', marginTop: 20, marginBottom: 30 },
+  scrollContent: { padding: 25, paddingBottom: 60 },
+  titleContainer: { alignItems: 'center', marginTop: 20, marginBottom: 40 },
+  bookTitle: { fontSize: 28, fontWeight: '900', textAlign: 'center', letterSpacing: -1 },
+  titleUnderline: { width: 30, height: 3, marginTop: 12, borderRadius: 2 },
   textContent: { fontSize: 19, lineHeight: 34, textAlign: 'left' },
-  lineFlash: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    height: 45, 
-    zIndex: -1,
-  }
+  lineFlash: { position: 'absolute', left: 0, right: 0, height: 45, zIndex: -1 },
+  finishSection: { paddingVertical: 80, alignItems: 'center', marginTop: 40 },
+  ornament: { width: 60, height: 1, marginBottom: 20, opacity: 0.3 },
+  finisText: { fontSize: 22, fontWeight: '900', letterSpacing: 12, marginBottom: 40 },
+  finishBtn: { borderWidth: 1, paddingVertical: 15, paddingHorizontal: 35, borderRadius: 2 },
+  finishBtnText: { fontWeight: 'bold', letterSpacing: 2, fontSize: 11 }
 });

@@ -14,7 +14,7 @@ export default function Login({ navigation }) {
     setLoading(true);
 
     try {
-      const res = await axios.post('http://192.168.1.15:5000/login', { email, password });
+      const res = await axios.post('http://172.20.10.3:5000/login', { email, password });
   loginUser({
   _id: res.data._id,
   email: res.data.email
@@ -22,7 +22,7 @@ export default function Login({ navigation }) {
 
 
       Alert.alert("Success", res.data.message);
-      navigation.replace('Home'); // go to Home on success
+      navigation.replace('Home'); 
     } catch (err) {
       Alert.alert("Error", err.response ? err.response.data.message : err.message);
     } finally {

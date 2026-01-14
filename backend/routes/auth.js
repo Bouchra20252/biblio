@@ -13,7 +13,6 @@ router.post("/login", async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // ⚠️ simple check (no hash yet)
     if (user.password !== password) {
       return res.status(401).json({ message: "Invalid password" });
     }

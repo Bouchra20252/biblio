@@ -5,7 +5,7 @@ const cors = require('cors');
 
 const app = express();
 
-app.use(cors());
+app.use(cors());//allows cross-origin requests.
 app.use(express.json());
 
 // Routes
@@ -13,11 +13,11 @@ app.use('/books', require('./routes/bookRoutes'));
 app.use('/reviews', require('./routes/reviewRoutes'));
 app.use('/favorites', require('./routes/FavoriteRoutes'));
 app.use('/auth', require('./routes/Auth'));
-
+app.use('/users', require('./routes/users'));
 
 const User = require('./models/User'); 
 
-// MongoDB
+
 mongoose.connect('mongodb://localhost:27017/biblio')
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.log(err));
@@ -25,7 +25,6 @@ mongoose.connect('mongodb://localhost:27017/biblio')
 
 
 
-// Signup
 app.post('/signup', async (req, res) => {
   const { email, password } = req.body;
 
@@ -42,7 +41,7 @@ app.post('/signup', async (req, res) => {
   }
 });
 
-// Login
+
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
@@ -59,5 +58,12 @@ app.post('/login', async (req, res) => {
   }
 });
 
-// Server
-app.listen(5000, () => console.log('Server running on port 5000'));
+
+app.get('/get' , (req , res ) => {
+  return res.json({ message: 'API is running' });
+})
+
+app.listen(5000, '0.0.0.0', () => {
+  console.log('Server running ');
+});
+
